@@ -11,7 +11,7 @@ document.getElementById('consultaForm').addEventListener('submit', async (e) => 
   
   try {
     // URL CORREGIDA (usa tu URL real de Railway)
-    const apiUrl = 'https://back-production-8e44.up.railway.app/api/consulta';
+    const apiUrl = 'https://back-production-bcc4.up.railway.app/api/consulta';
     
     // Realizar la petición
     const response = await fetch(apiUrl, {
