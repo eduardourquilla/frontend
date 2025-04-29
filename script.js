@@ -10,29 +10,51 @@ document.getElementById('consultaForm').addEventListener('submit', async (e) => 
   resultadoElement.innerHTML = '<p style="color: blue;">Consultando... ⏳</p>';
   
   try {
-    // URL CORREGIDA (usa tu URL real de Railway)
+    // URL de la API (asegúrate de que sea correcta)
     const apiUrl = 'https://back-production-bcc4.up.railway.app/api/consulta';
     
-    // Realizar la petición
+    console.log('Enviando petición a:', apiUrl);
+    console.log('Datos enviados:', { codigo, fecha });
+    
+    // Controlar timeout para evitar esperas muy largas
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 segundos de timeout
+    
+    // Realizar la petición con mejor control de errores
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        // Si tienes algún token de autenticación, inclúyelo aquí
+        // 'Authorization': 'Bearer tu-token'
       },
       body: JSON.stringify({ 
         codigo: codigo, 
         fecha: fecha 
       }),
+      signal: controller.signal,
+      // Intentar evitar cachés
+      cache: 'no-cache',
+      // Incluir cookies si es necesario para autenticación
+      credentials: 'include'
     });
+    
+    clearTimeout(timeoutId);
     
     // Verificar si la respuesta es exitosa
     if (!response.ok) {
-      const errorData = await response.text();
-      throw new Error(`Error del servidor: ${response.status} - ${errorData}`);
+      const errorText = await response.text();
+      console.error('Respuesta del servidor:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText
+      });
+      throw new Error(`Error del servidor: ${response.status} - ${response.statusText}`);
     }
     
     // Procesar respuesta exitosa
     const data = await response.json();
+    console.log('Respuesta recibida:', data);
     
     // Mostrar resultado (formateado para mejor legibilidad)
     resultadoElement.innerHTML = `
@@ -43,11 +65,28 @@ document.getElementById('consultaForm').addEventListener('submit', async (e) => 
     `;
     
   } catch (error) {
-    // Manejo de errores
+    // Manejo de errores mejorado
     console.error('Error completo:', error);
+    
+    let errorMessage = error.message;
+    
+    // Detectar tipos específicos de errores
+    if (error.name === 'AbortError') {
+      errorMessage = 'La solicitud excedió el tiempo de espera. Servidor no responde.';
+    } else if (error.message.includes('Failed to fetch')) {
+      errorMessage = `Error de conexión. Posibles causas:
+      - Servidor no disponible 
+      - Error CORS (Política de origen cruzado)
+      - Problemas de red
+      - URL incorrecta`;
+    }
+    
     resultadoElement.innerHTML = `
-      <p style="color: red;">❌ Error: ${error.message}</p>
-      <p style="font-size: 0.9em; color: #666;">Verifica la consola (F12 > Console) para más detalles</p>
+      <div style="color: red; padding: 15px; background: #fff0f0; border-radius: 5px; border-left: 4px solid red;">
+        <h3>❌ Error en la consulta</h3>
+        <p>${errorMessage}</p>
+        <p style="font-size: 0.9em; color: #666;">Consulta la consola (F12 > Console) para más detalles</p>
+      </div>
     `;
   }
 });
