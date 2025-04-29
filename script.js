@@ -5,7 +5,7 @@ document.getElementById('consultaForm').addEventListener('submit', async (e) => 
   const fecha = document.getElementById('fecha').value;
   
   try {
-    const response = await fetch('back-production-bcc4.up.railway.app', {
+    const response = await fetch('back-production-8e44.up.railway.app', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
